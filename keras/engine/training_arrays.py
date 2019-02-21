@@ -76,6 +76,7 @@ def fit_loop(model, fit_function, fit_inputs,
         `History` object.
     """
     do_validation = False
+    _batch_size = None
     if val_function and val_inputs:
         do_validation = True
         if (verbose and fit_inputs and
@@ -124,7 +125,7 @@ def fit_loop(model, fit_function, fit_inputs,
 
     callbacks.set_model(callback_model)
     callbacks.set_params({
-        'batch_size': batch_size,
+        'batch_size': _batch_size,
         'epochs': epochs,
         'steps': steps_per_epoch,
         'samples': num_train_samples,
@@ -177,12 +178,13 @@ def fit_loop(model, fit_function, fit_inputs,
                 for l, o in zip(out_labels, val_outs):
                     epoch_logs['val_' + l] = o
         else:
+            _batch_size = batch_size(epoch) if callable(batch_size) else batch_size  # check if batch size is to be calculated
             if shuffle == 'batch':
-                index_array = batch_shuffle(index_array, batch_size)
+                index_array = batch_shuffle(index_array, _batch_size)
             elif shuffle:
                 np.random.shuffle(index_array)
 
-            batches = make_batches(num_train_samples, batch_size)
+            batches = make_batches(num_train_samples, _batch_size)
             for batch_index, (batch_start, batch_end) in enumerate(batches):
                 batch_ids = index_array[batch_start:batch_end]
                 try:
@@ -213,7 +215,7 @@ def fit_loop(model, fit_function, fit_inputs,
             if batch_index == len(batches) - 1:  # Last batch.
                 if do_validation and should_run_validation(validation_freq, epoch):
                     val_outs = test_loop(model, val_function, val_inputs,
-                                         batch_size=batch_size,
+                                         batch_size=_batch_size,
                                          callbacks=callbacks,
                                          verbose=0)
                     val_outs = to_list(val_outs)
