@@ -965,7 +965,7 @@ class Model(Network):
             x, y,
             sample_weight=sample_weight,
             class_weight=class_weight,
-            batch_size=batch_size)
+            batch_size=batch_size(0) if callable(batch_size) else batch_size)
         # Prepare validation data.
         do_validation = False
         if validation_data:
@@ -985,7 +985,7 @@ class Model(Network):
             val_x, val_y, val_sample_weights = self._standardize_user_data(
                 val_x, val_y,
                 sample_weight=val_sample_weight,
-                batch_size=batch_size)
+                batch_size=batch_size(0) if callable(batch_size) else batch_size)
             if self._uses_dynamic_learning_phase():
                 val_inputs = val_x + val_y + val_sample_weights + [0.]
             else:
